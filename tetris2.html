@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>tetris</title>
+  </head>
+  <body>
+    <canvas id="can"></canvas>
+    <script type="text/javascript">
+//初期設定
+      let can = document.getElementById("can");
+      let con = can.getContext("2d");
+      const BlockSize = 30;
+      const TetriminoSize = 4;
+      const FieldCol = 10;
+      const FieldRow = 20;
+      const ScreenWidth = BlockSize*FieldCol;
+      const ScreenHeight = BlockSize*FieldRow;
+      can.width = ScreenWidth;
+      can.height = ScreenHeight;
+      can.style.border = "4px solid black";
+      let tetroX = 0;
+      let tetroY = 0;
+//フィールド本体
+      let field = [];
+      for(let y = 0;y<FieldCol;y++)
+      {
+        field[y] = [];
+        for(let x = 0;x<FieldRow;x++)
+        {
+          field[y][x] = 0;
+        }
+      }
+
+//テトリミノ描画
+      let tetro =
+      [
+      [0,0,0,0],
+      [1,1,0,0],
+      [0,1,1,0],
+      [0,0,0,0]
+      ];
+
+//ブロックの描画
+      function drawBlock(x,y)
+      {
+        let px = x*BlockSize;
+        let py = y*BlockSize;
+        con.fillStyle = "red";
+        con.fillRect(px,py,BlockSize,BlockSize);
+        con.strokeStyle = "black";
+        con.strokeRect(px,py,BlockSize,BlockSize);
+      }
+//すべての描画
+      function drawAll()
+      {
+        con.clearRect(0,0,ScreenWidth,ScreenHeight);
+        for(let y = 0;y<FieldCol;y++)
+        {
+          for(let x = 0;x<FieldRow;x++)
+          {
+            if(field[y][x])
+            {
+              drawBlock(x,y);
+            }
+          }
+        }
+        for(let y = 0;y<TetriminoSize;y++)
+        {
+          for(let x = 0;x<TetriminoSize;x++)
+          {
+            if(tetro[y][x])
+            {
+              drawBlock(tetroX+x,tetroY+y);
+            }
+          }
+        }
+      }
+
+drawAll();
+//キーボード処理
+document.onkeydown = function(event)
+{
+  switch (event.keyCode)
+  {
+    case 37://左
+    tetroX--;
+    break;
+    case 39://右
+    tetroX++;
+    break;
+    case 40://下
+    tetroY++;
+    break;
+    case 32://スペース
+    break;
+  }
+  drawAll();
+}
+
+
+    </script>
+  </body>
+</html>
