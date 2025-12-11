@@ -1,0 +1,86 @@
+# 基礎控除 110万円
+BASIC_DEDUCTION = 1_100_000
+
+# 特例税率（祖父母・父母など直系尊属→18歳以上の子・孫）
+SPECIAL_RATE_APPLIES_AGE = 18
+
+# 税率（一般税率）
+GENERAL_TAX_BRACKETS = [
+    (2_000_000, 0.10, 0),
+    (3_000_000, 0.15, 100_000),
+    (4_000_000, 0.20, 250_000),
+    (6_000_000, 0.30, 650_000),
+    (10_000_000, 0.40, 1_250_000),
+    (15_000_000, 0.45, 1_750_000),
+    (30_000_000, 0.50, 2_500_000),
+    (float("inf"), 0.55, 4_000_000)
+]
+
+# 特例税率（直系尊属 → 18歳以上）
+SPECIAL_TAX_BRACKETS = [
+    (2_000_000, 0.10, 0),
+    (4_000_000, 0.15, 100_000),
+    (6_000_000, 0.20, 300_000),
+    (10_000_000, 0.30, 900_000),
+    (15_000_000, 0.40, 1_900_000),
+    (30_000_000, 0.45, 2_650_000),
+    (45_000_000, 0.50, 4_150_000),
+    (float("inf"), 0.55, 6_400_000)
+]
+
+
+# --- 特例税率が使える親等の判定 ---
+def is_lineal_ascendant(relationship: str) -> bool:
+    return relationship in ['父', '母', '祖父', '祖母']
+
+
+# --- 税率テーブルから税額を計算 ---
+def calc_tax_from_bracket(taxable_amount, brackets):
+    for limit, rate, deduction in brackets:
+        if taxable_amount <= limit:
+            return taxable_amount * rate - deduction
+    return 0
+
+
+# --- 贈与税のメイン計算関数 ---
+def calc_gift_tax(age: int, relationship: str, yearly_gift: int):
+    # 1. 基礎控除
+    taxable = yearly_gift - BASIC_DEDUCTION
+    if taxable <= 0:
+        return 0  # 非課税
+    # 2. 特例税率を使える条件
+    use_special = (
+        age >= SPECIAL_RATE_APPLIES_AGE and
+        is_lineal_ascendant(relationship)
+    )
+    # 3. 使用する税率テーブルを選択
+    brackets = SPECIAL_TAX_BRACKETS if use_special else GENERAL_TAX_BRACKETS
+    # 4. 税率表に基づき税額を計算
+    return calc_tax_from_bracket(taxable, brackets)
+
+
+# --- 使用例 ---
+if __name__ == "__main__":
+    age = int(input("受贈者の年齢(贈与を受けた年の1月1日において): "))
+    relationship = input("贈与者との関係（父/母/祖父/祖母/その他）: ")
+    yearly_gift = int(input("その年の贈与額（円）: "))
+
+    tax = calc_gift_tax(age, relationship, yearly_gift)
+    print(f"贈与税額(2025年12月11日時点): {tax:,} 円")
+
+
+# --- UI ---
+st.title("贈与税計算アプリ（2025年版）")
+
+age = st.number_input("受贈者の年齢（1月1日時点）", min_value=0, max_value=120, value=20)
+
+relationship = st.selectbox(
+    "贈与者との関係",
+    ["父", "母", "祖父", "祖母", "その他"]
+)
+
+yearly_gift = st.number_input("その年の贈与額（円）", min_value=0, step=10000)
+
+if st.button("計算する"):
+    tax = calc_gift_tax(age, relationship, yearly_gift)
+    st.subheader(f"贈与税額：{tax:,} 円")
